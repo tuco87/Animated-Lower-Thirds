@@ -103,9 +103,14 @@
 			document.body.classList.add('preview');
 		}
 
-		const bcp = new BroadcastChannel('obs-lower-thirds-channel'); //Receives from the source
-		const bcr = new BroadcastChannel('obs-lower-thirds-channel2'); //Send to Control Panel
-		const bcf = new BroadcastChannel('obs-lower-thirds-fonts');
+		// Reemplazado BroadcastChannel por localStorage para compatibilidad con OBS 32+
+		// const bcp = new BroadcastChannel('obs-lower-thirds-channel'); 
+		// const bcr = new BroadcastChannel('obs-lower-thirds-channel2'); 
+		// const bcf = new BroadcastChannel('obs-lower-thirds-fonts');
+
+		// Variables para polling de localStorage
+		let lastStorageData = null;
+		let lastFontData = null;
 
 		let alt_1_logo_image_old;
 		let alt_2_logo_image_old;
@@ -415,8 +420,9 @@
 		}
 
 		///////////////////////////
-		bcp.onmessage = function (ev) {
-			const received_data = ev.data;
+		// Función para recibir datos desde localStorage (reemplaza bcp.onmessage)
+		function handleStorageMessage(received_data) {
+			if (!received_data) return;
 			const {global_animation_time, global_oneshot} = received_data;
 
 			if (mode != "preview") {
@@ -428,7 +434,7 @@
 
 			//Animated Lower Thirds 1
 			const {alt_1_style, alt_1_name, alt_1_info, alt_1_name_size, alt_1_info_size, alt_1_name_transform, alt_1_info_transform,
-				alt_1_name_weight, alt_1_name_style, alt_1_info_weight, alt_1_info_style, alt_1_name_color, alt_1_info_color, alt_1_logo_switch, alt_1_background_switch,
+				alt_1_name_weight, alt_1_info_weight, alt_1_name_color, alt_1_info_color, alt_1_logo_switch, alt_1_background_switch,
 				alt_1_shadows, alt_1_align = "left", alt_1_size, alt_1_margin_h, alt_1_margin_v, alt_1_font , alt_1_logo_image = "../logos/logo_1.png",
 				alt_1_logo_size, alt_1_shadow_amount, alt_1_corners, alt_1_border_switch} = received_data;
 			let {alt_1_switch, alt_1_preview, alt_1_style_color_1, alt_1_style_color_2, alt_1_line_spacing, alt_1_border_thickness_amount, alt_1_style_color_3, alt_1_style_color_4} = received_data;
@@ -457,7 +463,7 @@
 
 			//Animated Lower Thirds 2
 			const {alt_2_style, alt_2_name, alt_2_info, alt_2_name_size, alt_2_info_size, alt_2_name_transform, alt_2_info_transform,
-				alt_2_name_weight, alt_2_name_style, alt_2_info_weight, alt_2_info_style, alt_2_name_color, alt_2_info_color, alt_2_logo_switch, alt_2_background_switch,
+				alt_2_name_weight, alt_2_info_weight, alt_2_name_color, alt_2_info_color, alt_2_logo_switch, alt_2_background_switch,
 				alt_2_shadows, alt_2_align = "left", alt_2_size, alt_2_margin_h, alt_2_margin_v, alt_2_font, alt_2_logo_image = "../logos/logo_2.png",
 				alt_2_logo_size, alt_2_shadow_amount, alt_2_corners, alt_2_border_switch} = received_data;
 			let {alt_2_switch, alt_2_preview, alt_2_style_color_1, alt_2_style_color_2, alt_2_line_spacing, alt_2_border_thickness_amount, alt_2_style_color_3, alt_2_style_color_4} = received_data;
@@ -485,7 +491,7 @@
 
 			//Animated Lower Thirds 3
 			const {alt_3_style, alt_3_name, alt_3_info, alt_3_name_size, alt_3_info_size, alt_3_name_transform, alt_3_info_transform,
-				alt_3_name_weight, alt_3_name_style, alt_3_info_weight, alt_3_info_style, alt_3_name_color, alt_3_info_color, alt_3_logo_switch, alt_3_background_switch,
+				alt_3_name_weight, alt_3_info_weight, alt_3_name_color, alt_3_info_color, alt_3_logo_switch, alt_3_background_switch,
 				alt_3_shadows, alt_3_align = "left", alt_3_size, alt_3_margin_h, alt_3_margin_v, alt_3_font, alt_3_logo_image = "../logos/logo_3.png",
 				alt_3_logo_size, alt_3_shadow_amount, alt_3_corners, alt_3_border_switch} = received_data;
 			let {alt_3_switch, alt_3_preview, alt_3_style_color_1, alt_3_style_color_2, alt_3_line_spacing, alt_3_border_thickness_amount, alt_3_style_color_3, alt_3_style_color_4} = received_data;
@@ -513,7 +519,7 @@
 
 			//Animated Lower Thirds 4
 			const {alt_4_style, alt_4_name, alt_4_info, alt_4_name_size, alt_4_info_size, alt_4_name_transform, alt_4_info_transform,
-				alt_4_name_weight, alt_4_name_style, alt_4_info_weight, alt_4_info_style, alt_4_name_color, alt_4_info_color, alt_4_logo_switch, alt_4_background_switch,
+				alt_4_name_weight, alt_4_info_weight, alt_4_name_color, alt_4_info_color, alt_4_logo_switch, alt_4_background_switch,
 				alt_4_shadows, alt_4_align = "left", alt_4_size, alt_4_margin_h, alt_4_margin_v, alt_4_font, alt_4_logo_image = "../logos/logo_4.png",
 				alt_4_logo_size, alt_4_shadow_amount, alt_4_corners, alt_4_border_switch} = received_data;
 			let {alt_4_switch, alt_4_preview, alt_4_style_color_1, alt_4_style_color_2, alt_4_line_spacing, alt_4_border_thickness_amount, alt_4_style_color_3, alt_4_style_color_4} = received_data;
@@ -692,7 +698,7 @@
 				document.getElementById("lower-third-1").classList.replace("style-1", "style-" + alt_1_style);
 				document.getElementById("lower-third-1").classList.replace("style-2", "style-" + alt_1_style);
 				document.getElementById("lower-third-1").classList.replace("style-3", "style-" + alt_1_style);
-				document.getElementById("lower-third-1").classList.replace("style-4", "style-" + alt_1_style);
+				//document.getElementById("lower-third-1").classList.replace("style-4", "style-" + alt_1_style);
 				//document.getElementById("lower-third-1").classList.replace("style-5", "style-" + alt_1_style);
 			}
 			alt_1_style_old = alt_1_style;
@@ -704,7 +710,6 @@
 				document.getElementById("lower-third-2").classList.replace("style-1", "style-" + alt_2_style);
 				document.getElementById("lower-third-2").classList.replace("style-2", "style-" + alt_2_style);
 				document.getElementById("lower-third-2").classList.replace("style-3", "style-" + alt_2_style);
-				document.getElementById("lower-third-2").classList.replace("style-4", "style-" + alt_2_style);
 			}
 			alt_2_style_old = alt_2_style;
 
@@ -715,7 +720,6 @@
 				document.getElementById("lower-third-3").classList.replace("style-1", "style-" + alt_3_style);
 				document.getElementById("lower-third-3").classList.replace("style-2", "style-" + alt_3_style);
 				document.getElementById("lower-third-3").classList.replace("style-3", "style-" + alt_3_style);
-				document.getElementById("lower-third-3").classList.replace("style-4", "style-" + alt_3_style);
 			}
 			alt_3_style_old = alt_3_style;
 
@@ -726,7 +730,6 @@
 				document.getElementById("lower-third-4").classList.replace("style-1", "style-" + alt_4_style);
 				document.getElementById("lower-third-4").classList.replace("style-2", "style-" + alt_4_style);
 				document.getElementById("lower-third-4").classList.replace("style-3", "style-" + alt_4_style);
-				document.getElementById("lower-third-4").classList.replace("style-4", "style-" + alt_4_style);
 			}
 			alt_4_style_old = alt_4_style;
 
@@ -800,9 +803,7 @@
 			root.style.setProperty('--alt-1-name-transform', alt_1_name_transform);
 			root.style.setProperty('--alt-1-info-transform', alt_1_info_transform);
 			root.style.setProperty('--alt-1-name-weight', alt_1_name_weight);
-			root.style.setProperty('--alt-1-name-style', alt_1_name_style);
 			root.style.setProperty('--alt-1-info-weight', alt_1_info_weight);
-			root.style.setProperty('--alt-1-info-style', alt_1_info_style);
 			root.style.setProperty('--alt-1-name-color', alt_1_name_color);
 			root.style.setProperty('--alt-1-info-color', alt_1_info_color);
 			root.style.setProperty('--alt-1-style-color-1', alt_1_style_color_1);
@@ -824,9 +825,7 @@
 			root.style.setProperty('--alt-2-name-transform', alt_2_name_transform);
 			root.style.setProperty('--alt-2-info-transform', alt_2_info_transform);
 			root.style.setProperty('--alt-2-name-weight', alt_2_name_weight);
-			root.style.setProperty('--alt-2-name-style', alt_2_name_style);
 			root.style.setProperty('--alt-2-info-weight', alt_2_info_weight);
-			root.style.setProperty('--alt-2-info-style', alt_2_info_style);
 			root.style.setProperty('--alt-2-name-color', alt_2_name_color);
 			root.style.setProperty('--alt-2-info-color', alt_2_info_color);
 			root.style.setProperty('--alt-2-style-color-1', alt_2_style_color_1);
@@ -848,9 +847,7 @@
 			root.style.setProperty('--alt-3-name-transform', alt_3_name_transform);
 			root.style.setProperty('--alt-3-info-transform', alt_3_info_transform);
 			root.style.setProperty('--alt-3-name-weight', alt_3_name_weight);
-			root.style.setProperty('--alt-3-name-style', alt_3_name_style);
 			root.style.setProperty('--alt-3-info-weight', alt_3_info_weight);
-			root.style.setProperty('--alt-3-info-style', alt_3_info_style);
 			root.style.setProperty('--alt-3-name-color', alt_3_name_color);
 			root.style.setProperty('--alt-3-info-color', alt_3_info_color);
 			root.style.setProperty('--alt-3-style-color-1', alt_3_style_color_1);
@@ -872,15 +869,13 @@
 			root.style.setProperty('--alt-4-name-transform', alt_4_name_transform);
 			root.style.setProperty('--alt-4-info-transform', alt_4_info_transform);
 			root.style.setProperty('--alt-4-name-weight', alt_4_name_weight);
-			root.style.setProperty('--alt-4-name-style', alt_4_name_style);
 			root.style.setProperty('--alt-4-info-weight', alt_4_info_weight);
-			root.style.setProperty('--alt-4-info-style', alt_4_info_style);
 			root.style.setProperty('--alt-4-name-color', alt_4_name_color);
 			root.style.setProperty('--alt-4-info-color', alt_4_info_color);
 			root.style.setProperty('--alt-4-style-color-1', alt_4_style_color_1);
 			root.style.setProperty('--alt-4-style-color-2', alt_4_style_color_2);
-			root.style.setProperty('--alt-4-style-color-3', alt_4_style_color_3);
-			root.style.setProperty('--alt-4-style-color-4', alt_4_style_color_4);			
+			root.style.setProperty('--alt-4-style-color-3', alt_3_style_color_3);
+			root.style.setProperty('--alt-4-style-color-4', alt_3_style_color_4);			
 			root.style.setProperty('--alt-4-font', alt_4_font);
 			root.style.setProperty('--alt-4-logo-size', alt_4_logo_size + "em");
 			root.style.setProperty('--alt-4-corners', alt_4_corners + "em");
@@ -964,13 +959,45 @@
 			}
 		}
 
-		bcf.onmessage = function (ev) {
-			received_data = ev.data;
-			new_font = received_data.new_font_to_send;
-
-			//console.log(new_font);
-			$('head').append('<style>' + new_font + '</style>');
+		// SISTEMA DE POLLING para recibir cambios de localStorage
+		// (más confiable que 'storage' event en OBS)
+		function checkLocalStorageChanges() {
+			try {
+				// Revisar canal principal de datos
+				const currentData = localStorage.getItem('obs-lower-thirds-channel');
+				if (currentData && currentData !== lastStorageData) {
+					lastStorageData = currentData;
+					const data = JSON.parse(currentData);
+					handleStorageMessage(data);
+				}
+				
+				// Revisar canal de fuentes
+				const currentFontData = localStorage.getItem('obs-lower-thirds-fonts');
+				if (currentFontData && currentFontData !== lastFontData) {
+					lastFontData = currentFontData;
+					const data = JSON.parse(currentFontData);
+					if (data && data.new_font_to_send) {
+						$('head').append('<style>' + data.new_font_to_send + '</style>');
+					}
+				}
+			} catch (err) {
+				console.error('Error checking localStorage:', err);
+			}
 		}
+
+		// Cargar datos iniciales al inicio
+		try {
+			const initialData = localStorage.getItem('obs-lower-thirds-channel');
+			if (initialData) {
+				lastStorageData = initialData;
+				handleStorageMessage(JSON.parse(initialData));
+			}
+		} catch (err) {
+			console.error('Error loading initial data:', err);
+		}
+
+		// Iniciar polling cada 100ms (10 veces por segundo)
+		setInterval(checkLocalStorageChanges, 100);
 
 		function loadLogo(alt,logo) {
 			if(logo){
@@ -1018,7 +1045,26 @@
 			}
 
 
-			bcr.postMessage({activeTime1_to_send, inactiveTime1_to_send, activeTime2_to_send, inactiveTime2_to_send, activeTime3_to_send, inactiveTime3_to_send, activeTime4_to_send, inactiveTime4_to_send, alt_1_turnoff, alt_2_turnoff, alt_3_turnoff, alt_4_turnoff});
+			// Enviar datos al Control Panel usando localStorage
+			try {
+				const dataToSend = {
+					activeTime1_to_send, 
+					inactiveTime1_to_send, 
+					activeTime2_to_send, 
+					inactiveTime2_to_send, 
+					activeTime3_to_send, 
+					inactiveTime3_to_send, 
+					activeTime4_to_send, 
+					inactiveTime4_to_send, 
+					alt_1_turnoff, 
+					alt_2_turnoff, 
+					alt_3_turnoff, 
+					alt_4_turnoff
+				};
+				localStorage.setItem('obs-lower-thirds-channel2', JSON.stringify(dataToSend));
+			} catch (err) {
+				console.error('Error sending data to control panel:', err);
+			}
 
 			alt_1_turnoff = false;
 			alt_2_turnoff = false;
@@ -1034,7 +1080,12 @@
 
 		const x = 1; // Refresh time multiplier
 		setInterval(refreshData, x * 1000);
-		bcr.postMessage({resend: true});
+		// Solicitar reenvío de datos usando localStorage
+		try {
+			localStorage.setItem('obs-lower-thirds-channel2', JSON.stringify({resend: true}));
+		} catch (err) {
+			console.error('Error requesting resend:', err);
+		}
 
 	</script>
 

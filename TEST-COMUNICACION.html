@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prueba de Comunicación - Lower Thirds</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #3a3a3a;
+            border-radius: 5px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #4CAF50;
+            color: white;
+        }
+        .error {
+            background: #f44336;
+            color: white;
+        }
+        .info {
+            background: #2196F3;
+            color: white;
+        }
+        code {
+            background: #1a1a1a;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: #4CAF50;
+        }
+        #log {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Prueba de Comunicación localStorage</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Escribir datos</h3>
+            <p>Haz clic en este botón para escribir datos de prueba en localStorage:</p>
+            <button onclick="testWrite()">Escribir Test en localStorage</button>
+            <div id="write-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: Leer datos</h3>
+            <p>Haz clic para leer los datos que están en localStorage:</p>
+            <button onclick="testRead()">Leer datos de localStorage</button>
+            <div id="read-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Simular envío del Control Panel</h3>
+            <p>Esto simula cuando el Control Panel envía datos al Browser Source:</p>
+            <button onclick="testControlPanel()">Enviar como Control Panel</button>
+            <div id="cp-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Verificar Polling</h3>
+            <p>Este test verifica si el polling está funcionando (debería detectar cambios cada 100ms):</p>
+            <button onclick="startPollingTest()">Iniciar Test de Polling</button>
+            <button onclick="stopPollingTest()">Detener Test</button>
+            <div id="polling-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Log de Eventos:</h3>
+            <div id="log"></div>
+            <button onclick="clearLog()">Limpiar Log</button>
+        </div>
+    </div>
+
+    <script>
+        let pollingInterval = null;
+        let lastValue = null;
+
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.color = type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3';
+            entry.textContent = `[${time}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            addLog('Log limpiado', 'info');
+        }
+
+        function testWrite() {
+            try {
+                const testData = {
+                    timestamp: Date.now(),
+                    message: 'Test de escritura',
+                    random: Math.random()
+                };
+                localStorage.setItem('obs-lower-thirds-test', JSON.stringify(testData));
+                document.getElementById('write-status').innerHTML = 
+                    '<div class="status success">✅ Datos escritos correctamente</div>';
+                addLog('✅ Test Write: Datos escritos en localStorage', 'success');
+            } catch (err) {
+                document.getElementById('write-status').innerHTML = 
+                    '<div class="status error">❌ Error: ' + err.message + '</div>';
+                addLog('❌ Test Write: Error - ' + err.message, 'error');
+            }
+        }
+
+        function testRead() {
+            try {
+                const data = localStorage.getItem('obs-lower-thirds-test');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    document.getElementById('read-status').innerHTML = 
+                        '<div class="status success">✅ Datos leídos:<br><code>' + 
+                        JSON.stringify(parsed, null, 2) + '</code></div>';
+                    addLog('✅ Test Read: Datos leídos correctamente', 'success');
+                } else {
+                    document.getElementById('read-status').innerHTML = 
+                        '<div class="status info">ℹ️ No hay datos de test. Ejecuta primero "Test 1"</div>';
+                    addLog('ℹ️ Test Read: No hay datos', 'info');
+                }
+            } catch (err) {
+                document.getElementById('read-status').innerHTML = 
+                    '<div class="status error">❌ Error: ' + err.message + '</div>';
+                addLog('❌ Test Read: Error - ' + err.message, 'error');
+            }
+        }
+
+        function testControlPanel() {
+            try {
+                const cpData = {
+                    global_animation_time: 1,
+                    global_active_time: 5,
+                    global_inactive_time: 3,
+                    alt_1_switch: 'true',
+                    alt_1_name: 'PRUEBA FUNCIONANDO',
+                    alt_1_info: 'Si ves esto, está funcionando!',
+                    alt_1_style: '1',
+                    alt_1_align: 'left',
+                    alt_1_size: 24,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('obs-lower-thirds-channel', JSON.stringify(cpData));
+                document.getElementById('cp-status').innerHTML = 
+                    '<div class="status success">✅ Datos de Control Panel enviados<br>' +
+                    'Ahora ve a tu Browser Source en OBS y deberías ver el banner con:<br>' +
+                    '<code>Name: PRUEBA FUNCIONANDO<br>Info: Si ves esto, está funcionando!</code></div>';
+                addLog('✅ Test CP: Datos enviados a obs-lower-thirds-channel', 'success');
+            } catch (err) {
+                document.getElementById('cp-status').innerHTML = 
+                    '<div class="status error">❌ Error: ' + err.message + '</div>';
+                addLog('❌ Test CP: Error - ' + err.message, 'error');
+            }
+        }
+
+        function checkPolling() {
+            try {
+                const currentValue = localStorage.getItem('obs-lower-thirds-test');
+                if (currentValue !== lastValue) {
+                    lastValue = currentValue;
+                    addLog('🔄 Polling detectó cambio en localStorage!', 'success');
+                    const parsed = JSON.parse(currentValue);
+                    document.getElementById('polling-status').innerHTML = 
+                        '<div class="status success">✅ Polling funcionando! Detectó cambio:<br><code>' +
+                        JSON.stringify(parsed, null, 2) + '</code></div>';
+                }
+            } catch (err) {
+                // Silenciar errores de polling para no saturar
+            }
+        }
+
+        function startPollingTest() {
+            if (pollingInterval) {
+                addLog('⚠️ Polling ya está corriendo', 'info');
+                return;
+            }
+            lastValue = localStorage.getItem('obs-lower-thirds-test');
+            pollingInterval = setInterval(checkPolling, 100);
+            document.getElementById('polling-status').innerHTML = 
+                '<div class="status info">🔄 Polling iniciado (verificando cada 100ms)<br>' +
+                'Ahora ejecuta "Test 1" varias veces para ver si detecta los cambios</div>';
+            addLog('🔄 Polling iniciado (100ms)', 'info');
+        }
+
+        function stopPollingTest() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                document.getElementById('polling-status').innerHTML = 
+                    '<div class="status info">⏹️ Polling detenido</div>';
+                addLog('⏹️ Polling detenido', 'info');
+            } else {
+                addLog('ℹ️ Polling no estaba corriendo', 'info');
+            }
+        }
+
+        // Inicialización
+        addLog('🚀 Página de pruebas cargada', 'info');
+        addLog('📍 Ahora puedes ejecutar los tests', 'info');
+    </script>
+</body>
+</html>
